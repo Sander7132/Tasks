@@ -1,23 +1,38 @@
 const express = require('express')
-const app = express()
+const verifier = require('@gradeup/email-verify')
 const bcrypt = require('bcrypt')
+const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 3000
+const {v4: uuidv4} = require('uuid');
 
 // Add Swagger UI
 const swaggerUi = require('swagger-ui-express');
 const yamlJs = require('yamljs');
-const {verifyEmail, tryToParseJson} = require("./functions");
 const swaggerDocument = yamlJs.load('./swagger.yml');
-
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 app.use(express.static('public'))
 app.use(express.json())
-let users = [{
-    "id": 1,
-    "email": "email@example.com",
-    "password": "pass123"
-}];
+
+const users = [
+    {id: 1, email: 'admin', password: '$2b$10$0EfA6fMFRDVQWzU0WR1dmelPA7.qSp7ZYJAgneGsy2ikQltX2Duey'} // KollneKollne
+]
+
+let sessions = [
+    // {id: '123', userId: 1}
+]
+
+function tryToParseJson(jsonString) {
+    try {
+        var o = JSON.parse(jsonString);
+        if (o && typeof o === "object") {
+            return o;
+        }
+    } catch (e) {
+    }
+    return false;
+}
 
 app.post('/users', async (req, res) => {
 
@@ -61,7 +76,92 @@ app.post('/users', async (req, res) => {
     res.status(201).end()
 
 })
-app.listen(port, () => {
-    console.log(`App running at http://localhost:${port}. Documentation at http://localhost:${port}/docs`)
+
+// POST /sessions
+app.post('/sessions', async (req, res) => {
+
+    // Validate email and password
+    if (!req.body.email || !req.body.password) return res.status(400).send('Email and password are required')
+
+    // Find user in database
+    const user = users.find(user => user.email === req.body.email)
+    if (!user) return res.status(404).send('User not found')
+
+    // Compare password
+    try {
+        if (await bcrypt.compare(req.body.password, user.password)) {
+
+            // Create session
+            const session = {id: uuidv4(), userId: user.id}
+
+            // Add session to sessions array
+            sessions.push(session)
+
+            // Send session to client
+            res.status(201).send(session)
+
+        } else {
+            res.status(401).send('Invalid password')
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal server error')
+    }
+
 })
 
+function authorizeRequest(req, res, next) {
+    // Check that there is an authorization header
+    if (!req.headers.authorization) return res.status(401).send('Missing authorization header')
+
+    // Check that the authorization header is in the correct format
+    const authorizationHeader = req.headers.authorization.split(' ')
+    if (authorizationHeader.length !== 2 || authorizationHeader[0] !== 'Bearer') return res.status(400).send('Invalid authorization header')
+
+    // Get sessionId from authorization header
+    const sessionId = authorizationHeader[1]
+
+    // Find session in sessions array
+    const session = sessions.find(session => session.id === sessionId)
+    if (!session) return res.status(401).send('Invalid session')
+
+    // Check that the user exists
+    const user = users.find(user => user.id === session.userId)
+    if (!user) return res.status(401).send('Invalid session')
+
+    // Add user to request object
+    req.user = user
+
+    // Add session to request object
+    req.session = session
+
+    // Call next middleware
+    next()
+
+}
+
+app.delete('/sessions', authorizeRequest, (req, res) => {
+
+    // Remove session from sessions array
+    sessions = sessions.filter(session => session.id !== req.session.id)
+
+    res.status(204).end()
+
+})
+
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+})
+
+function verifyEmail(email) {
+    return new Promise((resolve, reject) => {
+        verifier.verify(email, (err, info) => {
+            console.log(err, info);
+            if (err) {
+                reject(JSON.stringify(info));
+            } else {
+                resolve(info);
+            }
+        });
+    });
+}
