@@ -1,5 +1,6 @@
 const verifier = require('@gradeup/email-verify');
 
+
 const verifyEmail = email => new Promise((resolve, reject) => {
     verifier.verify(email, (err, info) => {
         console.log(err, info);
