@@ -172,6 +172,23 @@ app.delete('/sessions', authorizeRequest, (req, res) => {
 
 })
 
+app.post('/tasks', authorizeRequest, (req, res) => {
+
+    // Validate title and content
+    if (!req.body.title || !req.body.content) return res.status(400).send('Title and content are required')
+
+    // Find max id
+    const maxId = tasks.reduce((max, task) => task.id > max ? task.id : max, tasks[0].id)
+
+    // Save task to database
+    tasks.push({id: maxId + 1, title: req.body.title, content: req.body.content, userId: req.user.id})
+
+    // Send task to client
+    res.status(201).send(tasks[tasks.length - 1])
+
+})
+
+
 app.listen(port, () => {
     console.log(`App running at http://localhost:${port}. Documentation at http://localhost:${port}/docs`)
     
