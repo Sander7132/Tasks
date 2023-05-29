@@ -21,6 +21,27 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="msapplication-config" content="/icons/browserconfig.xml">
     <meta name="theme-color" content="#ffffff">
+    <style>
+
+        #task-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-gap: 1rem;
+            grid-auto-rows: minmax(100px, auto);
+        }
+
+        .task-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: .25rem;
+            padding: 1rem;
+        }
+
+        .task-card:hover {
+            background-color: #e9ecef;
+        }
+
+    </style>
 </head>
 <body>
 
@@ -29,24 +50,40 @@
     <!-- Page content-->
     <div class="container">
         <div class="text-center mt-5">
-            <h1>Task Management App</h1>
-            <p class="lead">Task Management</p>
+            <h1>Efficient Task Management Made Easy</h1>
+            <p class="lead">Simplify task management with ease</p>
+            <p class="lead"><b>Sign up now to get started</b></p>
+            <hr>
             <div class="row">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" v-if="!sessionId"
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" v-if="!sessionId"
                         @click="showModal('signUpModal')">
                     Sign Up
                 </button>
                 &nbsp;
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" v-if="!sessionId"
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" v-if="!sessionId"
                         @click="showModal('signInModal')">
                     Sign In
                 </button>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" v-if="sessionId" @click="signOut">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" v-if="sessionId" @click="signOut">
                     Sign Out
                 </button>
+                &nbsp;
+                <hr>
+                <p class="lead" v-if="sessionId"><b>Welcome, here you can manage your tasks!</b></p>
+            </div>
+            &nbsp;
+
+            <!-- List of tasks -->
+            <div id="task-list">
+                <div v-for="task in tasks" class="task-card">
+                    {{ task.title }}<br>
+                    {{ task.content }}
+                </div>
             </div>
         </div>
     </div>
+
+    
 
     <!-- Sign Up Modal -->
     <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
@@ -71,8 +108,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" @click="signUp">Sign Up</button>
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" @click="signUp">Sign Up</button>
                 </div>
             </div>
         </div>
@@ -101,8 +138,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" @click="signIn">Sign In</button>
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" @click="signIn">Sign In</button>
                 </div>
             </div>
         </div>
@@ -132,15 +169,28 @@
                 signUpPassword: null,
                 signInEmail: null,
                 signInPassword: null,
-                sessionId: null
+                sessionId: null,
+                tasks: null
             }
         },
         mounted() {
             // Check if the user is already logged in from local storage
             this.sessionId = localStorage.getItem('sessionId')
 
+            // If the user is logged in, get the tasks
+            if (this.sessionId) {
+                this.getTasks()
+            }
+
         },
         methods: {
+            getTasks() {
+                this.send('GET', '/tasks').then(response => {
+                    if (response.ok) {
+                        this.tasks = response.body
+                    }
+                })
+            },
             showModal: function (modalId) {
                 this.modalHandler = new bootstrap.Modal(document.getElementById(modalId), {
                     keyboard: false
@@ -214,6 +264,9 @@
                     // Close the modal
                     this.modalHandler.hide()
 
+                    // Get the notes
+                    this.getTasks()
+
                 }
             },
             signOut: async function () {
@@ -228,6 +281,7 @@
             clearStorageAndResetSessionId: function () {
                 localStorage.removeItem('sessionId')
                 this.sessionId = null
+                this.tasks = null
             }
         }
     }).mount('#app')

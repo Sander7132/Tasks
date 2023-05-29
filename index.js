@@ -5,6 +5,7 @@ const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 3000
 const {v4: uuidv4} = require('uuid');
+const {tryToParseJson, verifyEmail} = require('./functions')
 
 // Add Swagger UI
 const swaggerUi = require('swagger-ui-express');
@@ -19,20 +20,33 @@ const users = [
     {id: 1, email: 'admin', password: '$2b$10$0EfA6fMFRDVQWzU0WR1dmelPA7.qSp7ZYJAgneGsy2ikQltX2Duey'} // KollneKollne
 ]
 
-let sessions = [
-    // {id: '123', userId: 1}
+const tasks = [
+    {
+        id: 1,
+        title: 'Task 1',
+        content: 'This is the content of task 1',
+        userId: 1
+    },
+    {
+        id: 2,
+        title: 'Task 2',
+        content: 'This is the content of task 2',
+        userId: 2
+    },
+    {
+        id: 3,
+        title: 'Task 3',
+        content: 'This is the content of task 3',
+        userId: 1
+    }
 ]
 
-function tryToParseJson(jsonString) {
-    try {
-        var o = JSON.parse(jsonString);
-        if (o && typeof o === "object") {
-            return o;
-        }
-    } catch (e) {
-    }
-    return false;
-}
+
+let sessions = [
+    // {id: '123', userId: 1}
+    {id: '123', userId: 1}
+]
+
 
 app.post('/users', async (req, res) => {
 
@@ -139,6 +153,15 @@ function authorizeRequest(req, res, next) {
     next()
 
 }
+app.get('/tasks', authorizeRequest, (req, res) => {
+
+    // Get tasks for user
+    const tasksForUser = tasks.filter(task => task.userId === req.user.id)
+
+    // Send tasks to client
+    res.send(tasksForUser)
+})
+
 
 app.delete('/sessions', authorizeRequest, (req, res) => {
 
@@ -150,18 +173,9 @@ app.delete('/sessions', authorizeRequest, (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
+    console.log(`App running at http://localhost:${port}. Documentation at http://localhost:${port}/docs`)
+    
+});
 
-function verifyEmail(email) {
-    return new Promise((resolve, reject) => {
-        verifier.verify(email, (err, info) => {
-            console.log(err, info);
-            if (err) {
-                reject(JSON.stringify(info));
-            } else {
-                resolve(info);
-            }
-        });
-    });
-}
+module.exports = app
+

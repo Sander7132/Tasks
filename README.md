@@ -9,7 +9,7 @@ npm install
 
 ### Compiles and hot-reloads for development
 
-``` 
+```
 npm start
 ```
 
@@ -25,3 +25,6 @@ MIT
 
 [Vue](https://vuejs.org/)
 [Express](https://expressjs.com/)
+[bcrypt](https://www.npmjs.com/package/bcrypt)
+[dotenv](https://www.npmjs.com/package/dotenv)
+[yaml](https://www.npmjs.com/package/yaml)
