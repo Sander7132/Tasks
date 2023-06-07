@@ -1,6 +1,6 @@
 openapi: 3.0.2
 info:
-  title: tak22-tasks
+  title: Task Management
   version: 1.0.0
 paths:
   /users:
@@ -15,6 +15,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
+            examples:
+              sander:
+                value:
+                  email: sander123@gmail.com
+                  password: pass1234
         required: true
       tags:
         - /users
@@ -109,6 +114,8 @@ paths:
               examples:
                 Missing authorization header:
                   value: Missing authorization header
+                Invalid authorization header:
+                  value: Invalid authorization header
                 Invalid session:
                   value: Invalid session
           description: Unauthorized
@@ -147,6 +154,8 @@ paths:
               examples:
                 Missing authorization header:
                   value: Missing authorization header
+                Invalid authorization header:
+                  value: Invalid authorization header
                 Invalid session:
                   value: Invalid session
           description: Unauthorized
@@ -187,6 +196,8 @@ paths:
               examples:
                 Missing authorization header:
                   value: Missing authorization header
+                Invalid authorization header:
+                  value: Invalid authorization header
                 Invalid session:
                   value: Invalid session
           description: Unauthorized
@@ -197,6 +208,61 @@ paths:
       summary: Create a Task
       description: Creates a new instance of a `Task`.
   '/tasks/{id}':
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+            examples:
+              PutTask:
+                value:
+                  content: some text
+                  title: some text
+        required: true
+      tags:
+        - /tasks
+      parameters:
+        -
+          examples:
+            '1':
+              value: '73'
+          name: id
+          description: The unique identifier of the `Task` to be updated.
+          schema:
+            type: integer
+          in: path
+          required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: Successful response.
+        '401':
+          content:
+            text/html:
+              examples:
+                Missing authorization header:
+                  value: Missing authorization header
+                Invalid authorization header:
+                  value: Invalid authorization header
+                Invalid session:
+                  value: Invalid session
+          description: Unauthorized
+        '404':
+          content:
+            text/html:
+              examples:
+                Task not found:
+                  value: Task not found
+          description: Task not found
+      security:
+        -
+          Bearer: []
+      summary: Update a Task
+      description: Updates an existing `Task`.
     delete:
       tags:
         - /tasks
