@@ -11,9 +11,16 @@ const swaggerUi = require("swagger-ui-express");
 const yamlJs = require("yamljs");
 const swaggerDocument = yamlJs.load("./swagger.yml");
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+const expressWs = require("express-ws")(app);
 
 app.use(express.static("public"));
 app.use(express.json());
+
+app.ws("/", function (ws) {
+  ws.on("message", function (msg) {
+    expressWs.getWss().clients.forEach((client) => client.send(msg));
+  });
+});
 
 const users = [
   {
@@ -168,6 +175,13 @@ app.delete("/tasks/:id", authorizeRequest, (req, res) => {
   // Remove task from tasks array
   tasks.splice(taskIndex, 1);
 
+  // Send delete event to clients
+  expressWs
+    .getWss()
+    .clients.forEach((client) =>
+      client.send(JSON.stringify({ event: "delete", id: tasks.id }))
+    );
+
   res.status(204).end();
 });
 
@@ -183,20 +197,29 @@ app.post("/tasks", authorizeRequest, (req, res) => {
   if (!req.body.title || !req.body.content)
     return res.status(400).send("Title and content are required");
 
- // Find max id
-    const maxId = tasks.reduce((max, task) => (task.id > max ? task.id : max), 0);
-
+  // Find max id
+  const maxId = tasks.reduce((max, task) => (task.id > max ? task.id : max), 0);
 
   // Save task to database
-  tasks.push({
+  const task = {
     id: maxId + 1,
     title: req.body.title,
     content: req.body.content,
     userId: req.user.id,
-  });
+  };
+
+  //Add task to tasks array
+  tasks.push(task);
+
+  // Send create event to client
+  expressWs
+    .getWss()
+    .clients.forEach((client) =>
+      client.send(JSON.stringify({ event: "create", task }))
+    );
 
   // Send task to client
-  res.status(201).send(tasks[tasks.length - 1]);
+  res.status(201).send(task);
 });
 
 app.put("/tasks/:id", authorizeRequest, (req, res) => {
@@ -222,6 +245,13 @@ app.put("/tasks/:id", authorizeRequest, (req, res) => {
   // Update task in tasks array
   task.title = req.body.title;
   task.content = req.body.content;
+
+  // Send update event to clients
+  expressWs
+    .getWss()
+    .clients.forEach((client) =>
+      client.send(JSON.stringify({ event: "update", task }))
+    );
 
   // Send task to client
   res.send(task);

@@ -28,3 +28,4 @@ MIT
 [bcrypt](https://www.npmjs.com/package/bcrypt)
 [dotenv](https://www.npmjs.com/package/dotenv)
 [yaml](https://www.npmjs.com/package/yaml)
+[Express-ws](https://www.npmjs.com/package/express-ws)
