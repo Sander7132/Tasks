@@ -27,7 +27,12 @@ const users = [
     id: 1,
     email: "admin",
     password: "$2b$10$0EfA6fMFRDVQWzU0WR1dmelPA7.qSp7ZYJAgneGsy2ikQltX2Duey",
-  }, // KollneKollne
+  }, // 12
+  {
+    id: 2,
+    email: "test",
+    password: "test",
+  }, // 12
 ];
 
 const tasks = [
@@ -48,7 +53,7 @@ app.post("/users", async (req, res) => {
   // Validate email and password
   if (!req.body.email || !req.body.password)
     return res.status(400).send("Email and password are required");
-  if (req.body.password.length < 8)
+  if (req.body.password.length < 2)
     return res.status(400).send("Password must be at least 8 characters long");
   if (!req.body.email.match(/^[+a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/))
     return res.status(400).send("Email must be in a valid format");
